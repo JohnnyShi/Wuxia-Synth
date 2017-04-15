@@ -153,3 +153,67 @@ Pbind(
 // Part 6: Water sound
 
 // Part 7: Sword sound
+
+// Part 8: Wooden Knocker
+
+(
+{
+	var son, son2;
+	son = Klank.ar(`[     // Klank: A bank of fixed requency resonators
+		[521,  800, 1034],  // freqs
+		[0.7, 0.5, 0.25],// amps
+		[0.3, 0.3, 0.3]   // ring times
+		]
+	, Impulse.ar(1));
+	son2 = CombL.ar(son, 0.2, 0.2, 0.2, 1, 0);
+	Out.ar(0, Pan2.ar(son2 * 0.2));
+}.play;
+)
+
+// Part 9: Temple Bell
+(
+{
+	var son, son2;
+	son = Klank.ar(`[     // Klank: A bank of fixed requency resonators
+		[151,  250, 334],  // freqs
+		[0.9, 0.6, 0.15],// amps
+		[6.0, 2.6, 1.4]   // ring times
+		]
+	, Impulse.ar(1));
+	son2 = CombL.ar(son, 0.2, 0.2, 0.2, 1, 0);
+	Out.ar(0, Pan2.ar(son * 0.2));
+}.play;
+)
+
+// Part 10: Another Plucked Zheng
+(
+SynthDef(\help_dwgplucked, { |out=0, freq=440, amp=0.5, gate=1, c3=20, pan=0|
+    var env = Env.new([0,1, 1, 0],[0.001,0.006, 0.0005],[5,-5, -8]);
+    var inp = amp * LFClipNoise.ar(2000) * EnvGen.ar(env,gate);
+    var son = DWGPlucked2.ar(freq, amp, gate,0.1,1,c3,inp);
+    DetectSilence.ar(son, 0.001, doneAction:2);
+    Out.ar(out, Pan2.ar(son * 0.1, pan));
+}).add;
+)
+
+//Use it.
+(
+a = Scale.new(
+    #[0, 1, 3, 5, 7, 8, 10],
+    12,
+    Tuning.new([0, 0.75, 2, 3.5, 4, 5, 6, 7, 8, 9, 10, 11]),
+    "Custom"
+);
+
+Pbind(
+    \instrument, \help_dwgplucked,
+    \scale ,a,
+    \delta , Pseq([1,0.5,0.5,0.5,0.5,0.5,0.5,1,0.5,0.5,1,1]*0.25,inf), // Use delta to control the time until next event
+    \dur , 2, // dur should be the same
+    \degree, Pseq([1,8,8,8,8,8,8,-6,Prand([9,10,11],1),1,7,8]-8, inf),
+    \amp , Pwhite(0.2,0.8),
+    \c3 , Pseq([Pseq([1400],24),Pseq([300],24)],inf),
+    \pan , Pwhite(-1,1),
+).play;
+)
+
