@@ -40,19 +40,41 @@ SynthDef(\ks_guitar, { arg note, pan, rand, delayTime, noiseType=1, low, lower, 
 
 )
 
+(// The Ambush
+// Section 1
+~notes_1 = [43,48,50,74];
+// Section 2
+
+a = Pbind(
+	\instrument, \ks_guitar,
+	\note,  Pseq.new(~notes, inf).midicps,
+	\dur, Pseq([1,1,1,1,1], inf),
+	\rand, Prand.new([0.2, 0.15, 0.15, 0.11, 0.11], inf),  // dur arg
+	\pan, 2.0.rand-1,
+		\low, 600,
+				\lower, 1800,
+		\mid, 3600,
+		\high, 4800,
+					\delayTime, 0.01+1.0.rand;  // decay time
+).play;
+)
+
 (
 
 
 a = Pdef(\kspattern,
 		Pbind(\instrument, \ks_guitar, // using our sine synthdef
-					\note, Pseq.new([60, 61, 63, 66], inf).midicps, // freq arg
-					\dur, Pseq.new([0.25, 0.5, 0.25, 1], inf),  // dur arg
-					\rand, Prand.new([0.2, 0.15, 0.15, 0.11], inf),  // dur arg
+		\note, Pseq.new([[43,48,50,74],[43,48,50,74],[43,48,50,74],[43,48,50,74],[74,50,48,43]], inf).midicps, // freq arg
+					\dur, Pseq.new([0.07, 0.07, 0.07, 0.07,1], inf),  // dur arg
+		            \sustain, 2,
+					\rand, Prand.new([0.11, 0.11, 0.11, 0.11, 0.11], inf),  // dur arg
 					\pan, 2.0.rand-1,
+		\strum, 0.01,
 		\low, 600,
-				\lower, 1800,
+		\lower, 1800,
 		\mid, 3600,
 		\high, 4800,
+		\amp, Pseq.new([0.3,0.4,0.5,0.6,1], inf),
 					\delayTime, 0.01+1.0.rand;  // decay time
 
 		)
@@ -154,17 +176,20 @@ Pbind(
 
 // Part 7: Sword sound
 
+
+
+
 // Part 8: Wooden Knocker
 
 (
 {
 	var son, son2;
 	son = Klank.ar(`[     // Klank: A bank of fixed requency resonators
-		[521,  800, 1034],  // freqs
-		[0.7, 0.5, 0.25],// amps
-		[0.3, 0.3, 0.3]   // ring times
+		[800,  907, 1134],  // freqs
+		[0.7, 0.35, 0.25],// amps
+		[0.25, 0.2, 0.1]   // ring times
 		]
-	, Impulse.ar(1));
+	, Impulse.ar(0));
 	son2 = CombL.ar(son, 0.2, 0.2, 0.2, 1, 0);
 	Out.ar(0, Pan2.ar(son2 * 0.2));
 }.play;
@@ -172,18 +197,72 @@ Pbind(
 
 // Part 9: Temple Bell
 (
-{
-	var son, son2;
-	son = Klank.ar(`[     // Klank: A bank of fixed requency resonators
-		[151,  250, 334],  // freqs
-		[0.9, 0.6, 0.15],// amps
-		[6.0, 2.6, 1.4]   // ring times
+SynthDef(\TempleBell, {|lowFreq, midFreq, highFreq|
+	var perc = Env.perc(0.01, 0.04, 1, -4).ar;
+	var bell = Klank.ar(`[
+		[lowFreq,  midFreq, highFreq],  // freqs
+		[0.9, 0.6, 0.35],// amps
+		[4.0, 3.3, 2.4]   // ring times
 		]
-	, Impulse.ar(1));
-	son2 = CombL.ar(son, 0.2, 0.2, 0.2, 1, 0);
-	Out.ar(0, Pan2.ar(son * 0.2));
-}.play;
+	, perc);
+	Out.ar(0, Pan2.ar(bell * 0.2));
+}).add;
+Synth(\TempleBell, [\lowFreq, 151, \midFreq, 250, \highFreq, 334]);
 )
+
+(
+~woodBar = [1, 2.572, 4.644, 6.984, 9.723, 12] ;  // uniform wooden bar
+~alumBar = [1, 2.756, 5.423, 8.988, 13.448, 18.680]; // uniform aluminum bar
+~bayunTabla = [1, 2.0, 3.01, 4.01, 4.69, 5.63]; // Bayan tabla
+)
+
+(
+
+~baseFreq = 400;
+//~freqs = ~woodBar * ~baseFreq;
+//~freqs = ~alumBar * ~baseFreq;
+~freqs = ~bayunTabla * ~baseFreq;
+~amps = [0.5, 0.2, 0.125, 0.0125, 0.0235, 0.125 ];
+~ring = [1.6,1.6,1.6,1.6, 1.6, 1.6];
+
+~low = rrand(200, 1800);
+~mid = rrand(2000, 4000);
+~high = rrand(4500, 6500);
+~lq = 0.6;
+~mq = 0.35;
+~hq = 0.35;
+
+play {
+
+	// exciters:
+	var perc = Env.perc.kr * BrownNoise.ar();
+	var noise = WhiteNoise.ar(0.1);
+	var filt = BPF.ar(noise, ~low, ~lq) + BPF.ar(noise, ~mid, ~mq) + BPF.ar(noise, ~high, ~hq);
+	var pluck = Pluck.ar(filt, 1, ~baseFreq.reciprocal, ~baseFreq.reciprocal, 0.25);  // if brownnoise is .kr... just... wtf...
+
+	var drum = MembraneCircle.ar(perc, 0.5, 0.99, 0.125);  // model contains resonator?..
+
+	// modal resonator: change input after array
+	var rsntr = Klank.ar(`[~freqs, ~amps, ~ring], pluck);
+	Out.ar(0, drum);
+}
+
+SynthDef(\TempleBell, { |baseFreq = 200, low = 151, mid = 250, high = 334, lq = 0.6, mq = 0.35, hq = 0.35|
+	var freqs = baseFreq * ~alumBar;
+	var perc = Env.perc.kr * BrownNoise.ar();
+	var noise = BrownNoise.ar(0.1);
+	var filt = BPF.ar(noise, low, lq) + BPF.ar(noise, mid, mq) + BPF.ar(noise, high, hq);
+	var pluck = Pluck.ar(filt, 1, baseFreq.reciprocal, baseFreq.reciprocal, 0.25);  // if brownnoise is .kr... just... wtf...
+
+	// modal resonator: change input after array
+	var rsntr = Klank.ar(`[freqs, ~amps, ~ring], pluck);
+	Out.ar(0, rsntr);
+}).add;
+Synth(\TempleBell);
+)
+
+
+
 
 // Part 10: Another Plucked Zheng
 (
