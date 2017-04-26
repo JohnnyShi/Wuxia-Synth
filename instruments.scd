@@ -44,7 +44,8 @@ SynthDef(\ks_guitar, { arg note, pan, rand, delayTime, noiseType=1, low, lower, 
 (// The Ambush
 // Section 1
 ~notes_1 = Array.fill(5, {[43,62,62,74]});
-~dur_1 = Array.fill(10, {[0.07,0.07,0.07,0.07,1.72]}) ++ Array.fill(6, {[0.05,0.05,0.05,0.05,0.05]});
+~highest_string_dur_1 = [1.72,1.02,0.62,0.42,0.32,0.27,0.22,0.17,0.12,0.07];
+~dur_1 = Array.fill(10, {|index|[0.07,0.07,0.07,0.07,~highest_string_dur_1[index]]}) ++ Array.fill(6, {Array.fill(5, {0.05})});
 // Section 2
 ~notes_2 = Array.fill(5,{[43,48,64,76]});
 ~notes_2_2 = Array.fill(5, {[62,62,64,76]});
@@ -336,3 +337,31 @@ play {
 	Out.ar(0, rsntr);
 }
 )
+
+(
+SynthDef(\head, { var excitation = EnvGen.kr(Env.perc,
+                            MouseButton.kr(0, 1, 0),
+                             timeScale: 0.1, doneAction: 0
+                            ) * PinkNoise.ar(0.4);
+  var tension = MouseX.kr(0.01, 0.1);
+  var loss = MouseY.kr(0.999999, 0.999, 1);
+  var sound = MembraneCircle.ar(excitation, tension, loss);
+Out.ar(21, sound);
+}).add;
+)
+
+x = Synth(\head);
+
+SynthDef(\body, { |fund=50, inS=1, inR=1|
+	var in = In.ar(21, 1);
+	var reson = Klank.ar(`[[1, 2.0, 3.01, 4.01, 4.69, 5.63] * fund, [1, 0.5, 0.25, 0.35, 0.25, 0.125], [2, 2, 2, 2, 2, 2]], in) ;
+	var filter = RLPF.ar(reson, fund + 4);
+	var local_verb = FreeVerb.ar((in * inS) + (reson * inR), 0.2, 0.1);
+	Out.ar(0, local_verb);
+
+}).add;
+
+y = Synth(\body, addAction: \addToTail);
+
+
+y.set(\inR, 0.9);
