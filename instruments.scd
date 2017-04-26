@@ -142,9 +142,9 @@ SynthDef(\xiao, {arg freq = 440;
 )
 
 Pbind(
-	\instrument, \xiao,
-	\freq, Prand([1, 1.1, 1.2, 1.3, 1, 4, 1.5] * 440, inf),
-	\dur, Prand([1, 2, 3], inf) * 0.5,
+ \instrument, \xiao,
+ \freq, Prand([60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 50], inf).midicps,
+ \dur, Prand([1, 2, 3], inf) * 0.5,
 ).play;
 
 // Part 5: water (rain drop)
@@ -166,8 +166,10 @@ SynthDef(\bubblebub, { |out=0, t_trig=1, attack=0.01, decay=0.08, pitchcurvelen=
 
 x = Synth(\bubblebub);
 
-// Part 6: Water sound
+// Part 6: Leaf sound
+{HPF.ar(WhiteNoise.ar, 1000) * LFNoise2.kr(1).squared.squared}.play;
 
+{HPF.ar(WhiteNoise.ar, 1000) * LFNoise2.kr(0.5, 0.5).squared.squared}.play;
 
 // Part 7: Sword sound
 (
