@@ -43,23 +43,39 @@ SynthDef(\ks_guitar, { arg note, pan, rand, delayTime, noiseType=1, low, lower, 
 
 (// The Ambush
 // Section 1
-~notes_1 = Array.fill(5, {[43,62,62,74]});
+~notes_1 = Array.fill(80, {[43,62,62,74]});
 ~highest_string_dur_1 = [1.72,1.02,0.62,0.42,0.32,0.27,0.22,0.17,0.12,0.07];
-~dur_1 = Array.fill(10, {|index|[0.07,0.07,0.07,0.07,~highest_string_dur_1[index]]}) ++ Array.fill(6, {Array.fill(5, {0.05})});
+~dur_1_temp = Array.fill(10, {|index|[0.07,0.07,0.07,0.07,~highest_string_dur_1[index]]}) ++ Array.fill(6, {Array.fill(5, {0.05})});
+~dur_1 = Array.new(80);
+~dur_1_temp.size.do{|index|
+	~dur_1 = ~dur_1 ++ ~dur_1_temp[index];
+};
 // Section 2
-~notes_2 = Array.fill(5,{[43,48,64,76]});
-~notes_2_2 = Array.fill(5, {[62,62,64,76]});
-~notes_2_3 = Array.fill(5, {[62,62,62,76]});
-~notes_3 = Array.fill(5, {[43,48,50,72]});
-~notes_4 = Array.fill(5, {[43,48,50,74]});
+~notes_2 = Array.fill(40,{[43,48,64,76]});
+~notes_2_2 = Array.fill(20, {[62,62,64,76]});
+~notes_2_3 = Array.fill(20, {[62,62,62,76]});
+~notes_2 = ~notes_2 ++ ~notes2_2 ++ ~notes2_3;
+~dur_2 = Array.fill(80,{0.05});
+~notes_3 = Array.fill(40, {[48,50,72]});
+~dur_3 = Array.fill(40,{0.05});
+~notes_4 = Array.fill(40, {[48,50,74]});
+~dur_4 = Array.fill(40,{0.05});
+~notes_5 = Array.fill(5, {[48,50,71]});
+~dur_5 = Array.fill(5, {0.05});
+~notes = ~notes_1 ++ ~notes_2 ++ ~notes_3 ++ ~notes_4 ++ ~notes_5;
+~dur= ~dur_1 ++ ~dur_2 ++ ~dur_3 ++ ~dur_4 ++ ~dur_5;
+
+
+
+
 // Section 3
-~notes_5 = Array.fill(5, {[43,48,50,71]});
+
 
 (
 a = Pdef(\kspattern,
 		Pbind(\instrument, \ks_guitar, // using our sine synthdef
-		\note, Pseq.new(~notes_1, 16).midicps, // freq arg
-		\dur, Pseq.new([0.07, 0.07, 0.07, 0.07,1.72, 0.07,0.07,0.07,0.07,1.02,0.07,0.07,0.07,0.07,0.62,0.07,0.07,0.07,0.07,0.42,0.07,0.07,0.07,0.07,0.32,0.07,0.07,0.07,0.07,0.27,0.07,0.07,0.07,0.07,0.22,0.07,0.07,0.07,0.07,0.17,0.07,0.07,0.07,0.07,0.12,0.07,0.07,0.07,0.07,0.07,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,], 10),  // dur arg
+		\note, Pseq.new(~notes).midicps, // freq arg
+		\dur, Pseq.new(~dur),  // dur arg
 		\sustain, 2,
 		\rand, Pseq.new([0.51, 0.51, 0.51, 0.51, 0.81], inf),  // dur arg
 		\pan, [0,1],
@@ -120,6 +136,7 @@ b = Pdef(\kspattern,
 // Part 2: wind sound
 // Rosonant low pass filter
 SynthDef(\wind, {
+	// wind rq 调整使风声变小
 	var windspd, snd;
 	windspd = LFDNoise3.kr(LFNoise1.kr(1, 0.5, 0.5), 0.5, 0.5);
 	snd = Pan2.ar(RLPF.ar(in:WhiteNoise.ar(), freq:windspd * 500 + 250, rq:LFNoise1.kr(1, 0.3, 0.5), mul:windspd * 0.5), LFDNoise3.kr(0.4, 0.5));
@@ -131,6 +148,8 @@ Synth(\wind);
 // Part 3: Xiao sound
 // Granular synthesis
 (
+// Goal 1: 使用箫吹段旋律
+// Goal 2: 使用箫吹短音做装饰
 SynthDef(\xiao, {arg freq = 440;
     var pan, env, freqdev, snd, winenv;
 // a custom envelope
@@ -147,6 +166,10 @@ Pbind(
  \freq, Prand([60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 50], inf).midicps,
  \dur, Prand([1, 2, 3], inf) * 0.5,
 ).play;
+
+// Part 4: Voicetest
+// buffer in 一个音频文件然后调整成念经效果 BALLPASS
+
 
 // Part 5: water (rain drop)
 
@@ -168,12 +191,14 @@ SynthDef(\bubblebub, { |out=0, t_trig=1, attack=0.01, decay=0.08, pitchcurvelen=
 x = Synth(\bubblebub);
 
 // Part 6: Leaf sound
+// 改成synthdef然后用dur控制时间长短
 {HPF.ar(WhiteNoise.ar, 1000) * LFNoise2.kr(1).squared.squared}.play;
 
 {HPF.ar(WhiteNoise.ar, 1000) * LFNoise2.kr(0.5, 0.5).squared.squared}.play;
 
 // Part 7: Sword sound
 (
+// 改perc和timeScale
 SynthDef(\sword, {
  var excitation = EnvGen.kr(Env.perc, timeScale: 0.6, doneAction: 2) * WhiteNoise.ar(0.5);
  var tension = 0.1;
