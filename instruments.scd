@@ -62,7 +62,7 @@ Synth(\Wind, [
 s.record("/Users/xinzhang/Desktop/Sound/Rain Drop.wav");
 s.stopRecording;
 (
-SynthDef(\RainDrop, { |out=0, t_trig=1, attack=0.01, decay=0.08, pitchcurvelen=0.1, freq=700, doneAction=0, amp=0.1|
+SynthDef(\RainDrop, { |out=0, t_trig=1, attack=0.01, decay=0.08, pitchcurvelen=0.1, freq=600, doneAction=0, amp=0.1|
  var pitch, snd;
  amp   = amp * EnvGen.ar(Env.perc(attack, decay).delay(0.003), t_trig, doneAction: doneAction);
  pitch = freq * EnvGen.ar(Env.new([0,0,1],[0,1]).exprange(1, 2.718), t_trig, timeScale: pitchcurvelen);
@@ -166,29 +166,10 @@ Synth(\Sword, [
 
 
 // Part 5: Xiao sound
-// use Granular synthesis to
-(
-SynthDef(\Xiao, {arg freq = 440;
-	var pan, env, freqdev, snd, winenv;
-	// a custom envelope
-	winenv = Env([1, 2, 3, 1], [0.1, 0.1, 0.1]);
-	z = Buffer.sendCollection(s, winenv.discretize, 1);
-	env = EnvGen.kr(Env([2, 2, 1, 0], [0.5, 0.5, 0.1]), doneAction: 2);
-	snd = GrainSin.ar(2, SinOsc.kr(), 1, freq, 0, z) * env;
-Out.ar(0, snd * 0.1);
-}).add;
-)
-(
-Pbind(
-	\instrument, \Xiao,
-	\freq, Prand([60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 50], inf).midicps,
-	\dur, Prand([1, 2, 3], inf) * 0.5,
-).play;
-)
-
 // use StkInst, which is  a wrapping of Synthesis toolkit of physical model instruments
 s.record("/Users/xinzhang/Desktop/Sound/Xiao.wav");
 s.stopRecording;
+// ar (freq: 440, jetDelay: 49, noisegain: 0.15, jetRatio: 0.32, mul: 1, add: 0)
 (
 SynthDef(\helpStkflute,{arg out=0,freq=220,gate=1,amp=1;
     var sig,env,noise;
@@ -198,7 +179,8 @@ SynthDef(\helpStkflute,{arg out=0,freq=220,gate=1,amp=1;
 	// noise = WhiteNoise.ar(0.2);
 	    Out.ar(out, sig);
 }).add;
-
+)
+(
 Pbind(
     \instrument, \helpStkflute,
 	\sustain, Pseq([0.1,0.1,0.1,3,0.1,1,0.1,4,0.1,0.1,0.1,0.1,3.0,0.1,1,0.1,2] + 0.15),
@@ -222,8 +204,8 @@ Buffer.read(s, "/Users/xinzhang/Desktop/voicetest.wav", action: { |buffer|
 
 
 
+
 // Part 7: Pipa
-// Karplus-Strong sound synthesis
 s.record("/Users/xinzhang/Desktop/Sound/Ambush.wav");
 s.stopRecording;
 (
@@ -244,7 +226,6 @@ SynthDef(\Pipa, { arg note, pan, rand, delayTime, noiseType=1, low, lower, mid, 
 	Out.ar(0, LeakDC.ar(x));
 }).add;
 )
-
 (// The Ambush
 // Section 1
 ~notes_1 = Array.fill(80, {[43,62,62,74]});
@@ -256,20 +237,20 @@ SynthDef(\Pipa, { arg note, pan, rand, delayTime, noiseType=1, low, lower, mid, 
 };
 // Section 2
 ~notes_2 = Array.fill(40,{[43,48,64,76]});
-~notes_2_2 = Array.fill(20, {[62,62,64,76]});
-~notes_2_3 = Array.fill(20, {[62,62,62,76]});
+~notes_2_2 = Array.fill(5, {[63,63,64,76]});
+~notes_2_3 = Array.fill(35, {[64,64,64,76]});
 ~notes_2 = ~notes_2 ++ ~notes2_2 ++ ~notes2_3;
 ~dur_2 = Array.fill(80,{0.05});
-~notes_3 = Array.fill(40, {[48,50,72]});
-~dur_3 = Array.fill(40,{0.05});
-~notes_4 = Array.fill(40, {[48,50,74]});
-~dur_4 = Array.fill(40,{0.05});
-~notes_5 = Array.fill(5, {[48,50,71]});
+~notes_3 = Array.fill(4, {[43,48,50,72]}) ++ Array.fill(26,{72});
+~dur_3 = Array.fill(4,{0.05});
+~notes_4 = Array.fill(4, {[43,48,50,74]}) ++ Array.fill(26, {74});
+~dur_4 = Array.fill(30,{0.05});
+~notes_5 = Array.fill(5, {[71]});
 ~dur_5 = Array.fill(5, {0.05});
+
 ~notes = ~notes_1 ++ ~notes_2 ++ ~notes_3 ++ ~notes_4 ++ ~notes_5;
 ~dur= ~dur_1 ++ ~dur_2 ++ ~dur_3 ++ ~dur_4 ++ ~dur_5;
 
-// Section 3
 (
 a = Pdef(\pipapattern,
 		Pbind(\instrument, \Pipa, // using our sine synthdef
@@ -278,7 +259,7 @@ a = Pdef(\pipapattern,
 		\sustain, 2,
 		\rand, Pseq.new([0.51, 0.51, 0.51, 0.51, 0.81], inf),  // dur arg
 		\pan, [0,1],
-		\strum, Pseq([0.01, 0.01, 0.01, 0.01, 0.01], inf),
+		\strum, Pseq([0.01, 0.01, 0.01, 0.01, 0.03], inf),
 		\low, 600,
 		\lower, 1200,
 		\mid, 3600,
@@ -288,34 +269,9 @@ a = Pdef(\pipapattern,
 ).play;)
 )
 
-// whitenoise demo
-// (
-// {
-// 	var burstEnv, att = 0, dec = 0.001;
-// 	var burst, delayTime, delayDecay = 0.5;
-// 	var midiPitch = 69; // A 440
-// 	delayTime = midiPitch.midicps.reciprocal;
-// 	burstEnv = EnvGen.kr(Env.perc(att, dec), gate: Impulse.kr(1/delayDecay));
-// 	burst = WhiteNoise.ar(burstEnv);
-// 	CombL.ar(burst, delayTime, delayTime, delayDecay, add: burst);
-// }.play
-// )
-
-// pinknoise demo
-// (
-// {
-// 	var burstEnv, att = 0, dec = 0.001;
-// 	var burst, delayTime, delayDecay = 0.5;
-// 	var midiPitch = 69; // A 440
-// 	delayTime = midiPitch.midicps.reciprocal;
-// 	burstEnv = EnvGen.kr(Env.perc(att, dec), gate: Impulse.kr(1/delayDecay));
-// 	burst = PinkNoise.ar(burstEnv);
-// 	CombL.ar(burst, delayTime, delayTime, delayDecay, add: burst);
-// }.play
-// )
-
 
 // Part 8: Zheng
+// Karplus-Strong sound synthesis
 // use UGen DWGPlucked
 s.record("/Users/xinzhang/Desktop/Sound/Zheng.wav");
 s.stopRecording;
@@ -342,15 +298,17 @@ SynthDef(\zheng2, { |out=0, freq=440, amp=0.5, gate=1, c3=20, pan=0, slct=1|
 }).add;
 )
 
-Synth(\zheng2, [\slct, 1]);
+Synth(\zheng2, [\slct, 1]); // Try to hear the plucked noise here
 
 play {BPF.ar(WhiteNoise.ar(0.94), 2500, 0.01) * Env.perc(0.01, 0.001).kr } ;
 
-//Use it.
+// Use it.
+// One flaw is if we play multiple notes too fast, like delta value with 0.2, then the server can't handle so many notes, which constrains us to implement a whole piece of this passionate instrument.
 (
 ~note_zheng2 = [6,8,1,0.5,0.5,1,0.5,0.5,4,2,1,1];
 ~note_zheng = [1,-4,1,1,2,0,-5,0,0,1,2,-3,2,2,3,1,-4,1,1,2,3,-2,3,3,4,2,-3,2,2,3,4,-1,4,4,5,3,-2,3,3,4,2,-3,2,2,4,3,-2,3,3,2,1];
 
+// Can define own Tuning here
 a = Scale.new(
     #[0, 2, 4, 7, 9],
     5,
@@ -429,18 +387,9 @@ Pbind(\instrument, \TempleBell,
 
 
 // Part 11: Chinese Drum
-(
-SynthDef(\ChineseDrumMain, {
-	var perc = Env.perc.kr * WhiteNoise.ar();
-	var tension = rrand(0.01, 0.05);
-	var loss = rrand(0.999, 0.99999);
-	var drum = MembraneCircle.ar(perc, tension, loss);
-	("      Value for tension:\t\t" + tension).postln;
-	("      Value for loss:\t\t" + loss).postln;
-}).add;
-)
-Synth(\ChineseDrumMain);
+// We've got no search result for the modal frequency ratio of this drum, and it's hard to record ourselves too, so here is the best we can do.
 
+// Try randomness on tension and loss of membraneCircle
 (
 play {
 	var perc = Env.perc.kr * BrownNoise.ar();
@@ -453,13 +402,16 @@ play {
 }
 )
 
+
+// Build the drum surface and giant resonator, which gets input from the former one.
+// Still sounds like some metal texture
 (
 SynthDef(\head, { var excitation = EnvGen.kr(Env.perc,
                             MouseButton.kr(0, 1, 0),
                              timeScale: 0.1, doneAction: 0
                             ) * PinkNoise.ar(0.4);
-  var tension = MouseX.kr(0.01, 0.1);
-  var loss = MouseY.kr(0.999999, 0.999, 1);
+  var tension = 0.03;
+  var loss = 0.999222;
   var sound = MembraneCircle.ar(excitation, tension, loss);
 Out.ar(21, sound);
 }).add;
@@ -470,7 +422,7 @@ x = Synth(\head);
 (
 SynthDef(\body, { |fund=50, inS=1, inR=1|
 	var in = In.ar(21, 1);
-	var reson = Klank.ar(`[[1, 2.0, 3.01, 4.01, 4.69, 5.63] * fund, [1, 0.5, 0.25, 0.35, 0.25, 0.125], [2, 2, 2, 2, 2, 2]], in) ;
+	var reson = Klank.ar(`[[1, 1.5, 2.0, 3.01, 4.69, 5.63] * fund, [1, 0.5, 0.25, 0.35, 0.25, 0.125], [2, 2, 2, 2, 2, 2]], in) ;
 	var filter = RLPF.ar(reson, fund + 4);
 	var local_verb = FreeVerb.ar((in * inS) + (reson * inR), 0.2, 0.1);
 	Out.ar(0, local_verb);
